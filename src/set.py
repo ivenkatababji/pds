@@ -8,7 +8,6 @@ False Positive
 False Negative 
     An error in which a test result improperly indicates no presence of a condition (the result is negative), when in reality it is present.
 '''
-from bloom_filter import BloomFilter
 import matplotlib.pyplot as plt
 import random
 import string
@@ -23,17 +22,17 @@ import argparse
 add_and_check
 '''
 
-def add_and_check(bf, key2add, key2check, verbose):
+def add_and_check(myset, key2add, key2check, verbose):
     hit = False
     if verbose:
         print('Adding :'+key2add)
 
-    bf.add(key2add)
+    myset.add(key2add)
 
     if(key2check is None):
         key2check = key2add
 
-    hit = key2check in bf
+    hit = key2check in myset
 
     if verbose:
         if hit:
@@ -54,11 +53,11 @@ def test():
     # `BloomFilter()` without any arguments. Following example
     # is same as defaults:
     prev_key = None
-    bf = BloomFilter(max_elements=10000, error_rate=0.1)
+    myset = set([])
 
     for i in range(0, 10):
         key = str(i)
-        if add_and_check(bf, key, prev_key, True):
+        if add_and_check(myset, key, prev_key, True):
             print ('Success')
         prev_key = key
 
@@ -70,7 +69,7 @@ def analyse(max_elements, error_rate, iteration_count, population_count):
     process = psutil.Process(os.getpid())
     m0 = process.memory_info().rss
     print('Initial Memory : '+str(m0))
-    bf = BloomFilter(max_elements=max_elements, error_rate=error_rate)
+    myset = set([])
     m0 = process.memory_info().rss
     print('Memory after Bloom Filter: '+str(m0))
 
@@ -114,14 +113,14 @@ def analyse(max_elements, error_rate, iteration_count, population_count):
             if prev_key is None:
                 prev_key = key
 
-            bf.add(key)
+            myset.add(key)
 
             #lets check whatever we just added is present or not
-            if prev_key not in bf:
+            if prev_key not in myset:
                 count_false_negative += 1
 
             # We never generated any with 'x'. So shouldn't be there.
-            if (key+'x') in bf:
+            if (key+'x') in myset:
                 count_false_positive += 1
 
 
@@ -153,12 +152,20 @@ def analyse(max_elements, error_rate, iteration_count, population_count):
     ax.margins(0.02, 0.02)
 
     ax.set_xlabel('Population Count ( x'+'{:,}'.format(population_count)+' )')
-    ax.plot(iter, false_positive, label='False +ve(%)')
-    ax.plot(iter, false_negative, label='False -ve(%)')
-    ax.plot(iter, time_measured, label='Time(Sec)')
+    #ax.plot(iter, false_positive, label='False +ve(%)')
+    #ax.plot(iter, false_negative, label='False -ve(%)')
+    #ax.plot(iter, memory_measured, label='Memory')
+    total_memory = 0;
+    mem_accumulated = []
+    for x in memory_measured:
+        total_memory += x;
+        mem_accumulated.append(total_memory/1024/1024)
+    ax.plot(iter, mem_accumulated, label='Memory (MB)')
+    #ax.plot(iter, [x/1024/1024 for x in memory_measured], label='Memory (MB)')
+    #ax.plot(iter, time_measured, label='Time(Sec)')
 
     ax.grid(True, which='both')
-    ax.set_title("Bloom Filter")
+    ax.set_title("Set")
     ax.legend(loc='best')
     plt.show()
 
