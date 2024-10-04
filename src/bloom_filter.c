@@ -95,6 +95,32 @@ void free_bloom_filter(BloomFilter *bloom) {
     free(bloom);
 }
 
+#ifdef NO_KMOPT
+// Add an item to the Bloom filter
+void bloom_add(BloomFilter *bloom, const char *item) {
+    uint32_t hash;
+    for (int i = 0; i < bloom->num_hashes; i++) {
+        // Use a different seed for each hash function
+        MurmurHash3_x86_32(item, strlen(item), i, &hash);
+        uint32_t index = hash % bloom->size; // Map to bit array size
+        bloom->bit_array[index / 8] |= (1 << (index % 8)); // Set the bit
+    }
+}
+
+// Check if an item is in the Bloom filter
+int bloom_check(BloomFilter *bloom, const char *item) {
+    uint32_t hash;
+    for (int i = 0; i < bloom->num_hashes; i++) {
+        // Use a different seed for each hash function
+        MurmurHash3_x86_32(item, strlen(item), i, &hash);
+        uint32_t index = hash % bloom->size; // Map to bit array size
+        if (!(bloom->bit_array[index / 8] & (1 << (index % 8)))) {
+            return 0; // If any bit is not set, the item is definitely not present
+        }
+    }
+    return 1; // If all bits are set, the item might be present
+}
+#else
 // Add an item to the Bloom filter
 void bloom_add(BloomFilter *bloom, const char *item) {
     uint32_t h1, h2;
@@ -121,6 +147,7 @@ int bloom_check(BloomFilter *bloom, const char *item) {
     }
     return 1; // If all bits are set, the item might be present
 }
+#endif //NO_KMOPT
 
 
 void gen_rand_str(char* buf, uint32_t len)
@@ -179,6 +206,9 @@ void test(int argc, char** argv)
     
     BloomFilter *bloom = create_bloom_filter(num_elements, error_rate);
     printf("Bloom filter created with size: %'lu bits and %'d hash functions\n", bloom->size, bloom->num_hashes);
+    #ifdef NO_KMOPT
+    printf("Kirsch-Mitzenmacher Optimization is turned off.\n");
+    #endif
 
     const unsigned int count = num_elements*0.9;
     char str_buffer[] = {[42] = '\0'};
