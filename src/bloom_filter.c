@@ -218,8 +218,8 @@ void test(int argc, char** argv)
     printf("Number of entries added : %'u\n", count);
     printf("Time taken : %'ld ms\n", t/1000/1000);
     printf("Pass Count : %'u\n", p_count);
-    printf("Fale -Ve Count : %'u\n", fn_count);
-    printf("Fale +Ve Count : %'u\n", fp_count);
+    printf("False -Ve Count : %'u\n", fn_count);
+    printf("False +Ve Count : %'u\n", fp_count);
 
     return;
 }
